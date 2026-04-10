@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { uploadFile } from "@/lib/storage";
-import { Plus, Pencil, Trash2, LogOut, Eye, Image, QrCode } from "lucide-react";
+import { Plus, Pencil, Trash2, LogOut, Eye, Image, Download } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 
 const SetupRestaurant = ({ userId }: { userId: string }) => {
   const [name, setName] = useState("");
