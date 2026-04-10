@@ -64,6 +64,7 @@ const SetupRestaurant = ({ userId }: { userId: string }) => {
   );
 };
 
+const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut, loading: authLoading } = useAuth();
   const { data: restaurant, isLoading } = useRestaurant();
