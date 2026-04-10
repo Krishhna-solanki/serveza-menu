@@ -300,9 +300,39 @@ const Dashboard = () => {
                     >
                       Copy
                     </Button>
+                </div>
+                <div>
+                  <Label>QR Code</Label>
+                  <div className="mt-2 flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-border w-fit">
+                    <QRCodeCanvas
+                      id="menu-qr-code"
+                      value={`${window.location.origin}/menu/${restaurant.slug}`}
+                      size={200}
+                      level="H"
+                      bgColor="#ffffff"
+                      fgColor="#0d0d0d"
+                    />
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => {
+                      const canvas = document.getElementById("menu-qr-code") as HTMLCanvasElement;
+                      if (!canvas) return;
+                      const url = canvas.toDataURL("image/png");
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${restaurant.slug}-qr-code.png`;
+                      a.click();
+                      toast.success("QR code downloaded!");
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-1" /> Download QR Code
+                  </Button>
                 </div>
               </div>
+            </div>
             </div>
           </div>
         )}
