@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRestaurant, useCategories, useMenuItems, useUpdateRestaurant, useCreateCategory, useUpdateCategory, useDeleteCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem } from "@/hooks/useRestaurant";
+import { useRestaurant, useCreateRestaurant, useCategories, useMenuItems, useUpdateRestaurant, useCreateCategory, useUpdateCategory, useDeleteCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem } from "@/hooks/useRestaurant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,57 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { uploadFile } from "@/lib/storage";
 import { Plus, Pencil, Trash2, LogOut, Eye, Image, QrCode } from "lucide-react";
+
+const SetupRestaurant = ({ userId }: { userId: string }) => {
+  const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [loading, setLoading] = useState(false);
+  const createRestaurant = useCreateRestaurant();
+
+  const generateSlug = (n: string) =>
+    n.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-") + "-" + Math.random().toString(36).substring(2, 8);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setLoading(true);
+    try {
+      await createRestaurant.mutateAsync({
+        name, slug: generateSlug(name), user_id: userId, mobile,
+      });
+      toast.success("Restaurant created!");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-heading text-gradient-gold mb-2">Welcome!</h1>
+          <p className="text-muted-foreground">Set up your restaurant to get started</p>
+        </div>
+        <div className="bg-card border border-border rounded-lg p-6 shadow-lg">
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div>
+              <Label>Restaurant Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. The Golden Spoon" required />
+            </div>
+            <div>
+              <Label>Mobile Number</Label>
+              <Input value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="+91 9876543210" />
+            </div>
+            <Button type="submit" className="w-full gradient-gold text-primary-foreground font-semibold" disabled={loading}>
+              {loading ? "Creating..." : "Create Restaurant"}
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -54,6 +105,10 @@ const Dashboard = () => {
   if (!user) {
     navigate("/login");
     return null;
+  }
+
+  if (!restaurant) {
+    return <SetupRestaurant userId={user.id} />;
   }
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

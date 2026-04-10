@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreateRestaurant } from "@/hooks/useRestaurant";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,6 @@ import { toast } from "sonner";
 const Register = () => {
   const navigate = useNavigate();
   const { signUp } = useAuth();
-  const createRestaurant = useCreateRestaurant();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     restaurantName: "",
@@ -35,22 +34,32 @@ const Register = () => {
 
       if (error) {
         toast.error(error.message);
+        setLoading(false);
         return;
       }
 
-      // Wait for session
-      const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+      // Wait a moment for session to be established after auto-confirm
+      await new Promise((r) => setTimeout(r, 500));
+
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        await createRestaurant.mutateAsync({
+        const { error: restError } = await supabase.from("restaurants").insert({
           name: form.restaurantName,
           slug: generateSlug(form.restaurantName),
           user_id: session.user.id,
           mobile: form.mobile,
         });
+        if (restError) {
+          console.error("Restaurant creation error:", restError);
+          toast.error("Account created but restaurant setup failed. Please try from the dashboard.");
+        } else {
+          toast.success("Account created successfully!");
+        }
+        navigate("/dashboard");
+      } else {
+        toast.success("Account created! Please check your email to verify, then sign in.");
+        navigate("/login");
       }
-
-      toast.success("Account created! Please check your email to verify.");
-      navigate("/dashboard");
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     } finally {
