@@ -29,7 +29,7 @@ export const useRestaurantBySlug = (slug: string) => {
         .from("restaurants")
         .select("*")
         .eq("slug", slug)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
