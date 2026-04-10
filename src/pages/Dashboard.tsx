@@ -56,6 +56,10 @@ const Dashboard = () => {
     return null;
   }
 
+  if (!restaurant) {
+    return <SetupRestaurant userId={user.id} />;
+  }
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !restaurant) return;
