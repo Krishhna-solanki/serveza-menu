@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { uploadFile } from "@/lib/storage";
-import { Plus, Pencil, Trash2, LogOut, Eye, Image, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, LogOut, Eye, Image, Download, Clock } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
 const SetupRestaurant = ({ userId }: { userId: string }) => {
@@ -110,6 +110,29 @@ const Dashboard = () => {
 
   if (!restaurant) {
     return <SetupRestaurant userId={user.id} />;
+  }
+
+  if (restaurant.status !== "active") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h1 className="font-heading text-2xl text-foreground mb-2">
+            {restaurant.status === "pending" ? "Account Pending Approval" : "Account Blocked"}
+          </h1>
+          <p className="text-muted-foreground max-w-md">
+            {restaurant.status === "pending"
+              ? "Your account is under review. You'll be able to access your dashboard once approved by the admin."
+              : "Your account has been blocked. Please contact support for assistance."}
+          </p>
+          <Button variant="outline" className="mt-6" onClick={async () => { await signOut(); navigate("/login"); }}>
+            <LogOut className="w-4 h-4 mr-2" /> Sign Out
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
