@@ -15,7 +15,7 @@ export const useRestaurant = () => {
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as (typeof data & { status: string; plan: string }) | null;
     },
     enabled: !!user,
   });
