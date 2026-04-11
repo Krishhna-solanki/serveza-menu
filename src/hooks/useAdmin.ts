@@ -34,7 +34,7 @@ export const useAllRestaurants = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as (typeof data[number] & { status: string; plan: string })[];
     },
   });
 };
