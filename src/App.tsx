@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import MenuView from "./pages/MenuView";
 import NotFound from "./pages/NotFound";
 import AdminPanel from "./pages/AdminPanel";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/menu/:slug" element={<MenuView />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
