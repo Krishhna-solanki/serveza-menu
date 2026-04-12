@@ -112,6 +112,56 @@ export type Database = {
           },
         ]
       }
+      payment_requests: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          plan_type: string
+          restaurant_id: string
+          screenshot_url: string
+          status: string
+          updated_at: string
+          upi_transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          plan_type: string
+          restaurant_id: string
+          screenshot_url: string
+          status?: string
+          updated_at?: string
+          upi_transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          plan_type?: string
+          restaurant_id?: string
+          screenshot_url?: string
+          status?: string
+          updated_at?: string
+          upi_transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_requests_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurants: {
         Row: {
           cover_url: string | null
@@ -121,8 +171,12 @@ export type Database = {
           mobile: string | null
           name: string
           plan: string
+          plan_end_date: string | null
+          plan_status: string
+          plan_type: string
           slug: string
           status: string
+          trial_end_date: string | null
           updated_at: string
           user_id: string
         }
@@ -134,8 +188,12 @@ export type Database = {
           mobile?: string | null
           name: string
           plan?: string
+          plan_end_date?: string | null
+          plan_status?: string
+          plan_type?: string
           slug: string
           status?: string
+          trial_end_date?: string | null
           updated_at?: string
           user_id: string
         }
@@ -147,8 +205,12 @@ export type Database = {
           mobile?: string | null
           name?: string
           plan?: string
+          plan_end_date?: string | null
+          plan_status?: string
+          plan_type?: string
           slug?: string
           status?: string
+          trial_end_date?: string | null
           updated_at?: string
           user_id?: string
         }

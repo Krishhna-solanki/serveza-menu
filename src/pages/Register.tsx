@@ -43,11 +43,16 @@ const Register = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        const trialEnd = new Date();
+        trialEnd.setDate(trialEnd.getDate() + 7);
         const { error: restError } = await supabase.from("restaurants").insert({
           name: form.restaurantName,
           slug: generateSlug(form.restaurantName),
           user_id: session.user.id,
           mobile: form.mobile,
+          plan_type: "trial",
+          plan_status: "trial",
+          trial_end_date: trialEnd.toISOString(),
         });
         if (restError) {
           console.error("Restaurant creation error:", restError);
