@@ -113,24 +113,83 @@ const Dashboard = () => {
     return <SetupRestaurant userId={user.id} />;
   }
 
-  if (restaurant.status !== "active") {
+  // Check plan expiry
+  const isPlanExpired = () => {
+    if (!restaurant) return false;
+    const r = restaurant as any;
+    if (r.plan_type === "lifetime") return false;
+    if (r.plan_status === "active" && r.plan_end_date) {
+      return new Date(r.plan_end_date) < new Date();
+    }
+    if (r.plan_status === "trial" && r.trial_end_date) {
+      return new Date(r.trial_end_date) < new Date();
+    }
+    return r.plan_status === "expired";
+  };
+
+  const planExpired = isPlanExpired();
+
+  if (restaurant.status !== "active" && restaurant.status !== "pending") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center animate-fade-in">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
             <Clock className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h1 className="font-heading text-2xl text-foreground mb-2">
-            {restaurant.status === "pending" ? "Account Pending Approval" : "Account Blocked"}
-          </h1>
+          <h1 className="font-heading text-2xl text-foreground mb-2">Account Blocked</h1>
           <p className="text-muted-foreground max-w-md">
-            {restaurant.status === "pending"
-              ? "Your account is under review. You'll be able to access your dashboard once approved by the admin."
-              : "Your account has been blocked. Please contact support for assistance."}
+            Your account has been blocked. Please contact support for assistance.
           </p>
           <Button variant="outline" className="mt-6" onClick={async () => { await signOut(); navigate("/login"); }}>
             <LogOut className="w-4 h-4 mr-2" /> Sign Out
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (restaurant.status === "pending") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h1 className="font-heading text-2xl text-foreground mb-2">Account Pending Approval</h1>
+          <p className="text-muted-foreground max-w-md">
+            Your account is under review. You'll be able to access your dashboard once approved by the admin.
+          </p>
+          <Button variant="outline" className="mt-6" onClick={async () => { await signOut(); navigate("/login"); }}>
+            <LogOut className="w-4 h-4 mr-2" /> Sign Out
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (planExpired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-yellow-500" />
+          </div>
+          <h1 className="font-heading text-2xl text-foreground mb-2">
+            {(restaurant as any).plan_status === "trial" ? "Free Trial Expired" : "Plan Expired"}
+          </h1>
+          <p className="text-muted-foreground max-w-md">
+            {(restaurant as any).plan_status === "trial"
+              ? "Your 7-day free trial has ended. Upgrade to continue managing your menu."
+              : "Your plan has expired. Please renew to continue using all features."}
+          </p>
+          <div className="flex gap-3 mt-6 justify-center">
+            <Button className="gradient-gold text-primary-foreground" onClick={() => navigate("/pricing")}>
+              <Crown className="w-4 h-4 mr-2" /> Upgrade Plan
+            </Button>
+            <Button variant="outline" onClick={async () => { await signOut(); navigate("/login"); }}>
+              <LogOut className="w-4 h-4 mr-2" /> Sign Out
+            </Button>
+          </div>
         </div>
       </div>
     );
