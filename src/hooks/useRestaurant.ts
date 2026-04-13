@@ -52,7 +52,7 @@ export const useCreateRestaurant = () => {
 export const useUpdateRestaurant = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name?: string; logo_url?: string; cover_url?: string; mobile?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; logo_url?: string; cover_url?: string; mobile?: string; show_logo?: boolean; show_banner?: boolean }) => {
       const { error } = await supabase.from("restaurants").update(data).eq("id", id);
       if (error) throw error;
     },

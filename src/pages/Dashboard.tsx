@@ -396,6 +396,24 @@ const Dashboard = () => {
                     </label>
                   </div>
                 </div>
+                {/* Display Toggles */}
+                <div className="space-y-3 pt-2 border-t border-border">
+                  <Label className="text-sm font-medium">Display Settings</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm text-muted-foreground">Show Logo on Menu</Label>
+                    <Switch
+                      checked={(restaurant as any).show_logo !== false}
+                      onCheckedChange={(v) => updateRestaurant.mutate({ id: restaurant.id, show_logo: v })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm text-muted-foreground">Show Banner on Menu</Label>
+                    <Switch
+                      checked={(restaurant as any).show_banner !== false}
+                      onCheckedChange={(v) => updateRestaurant.mutate({ id: restaurant.id, show_banner: v })}
+                    />
+                  </div>
+                </div>
                 <div>
                   <Label>Menu Link</Label>
                   <div className="flex items-center gap-2 mt-1">
