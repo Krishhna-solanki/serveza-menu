@@ -13,6 +13,9 @@ const MenuView = () => {
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const tabsRef = useRef<HTMLDivElement>(null);
 
+  const showLogo = (restaurant as any)?.show_logo !== false;
+  const showBanner = (restaurant as any)?.show_banner !== false;
+
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add("dark");
@@ -57,7 +60,6 @@ const MenuView = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [categories]);
 
-  // Auto-scroll active tab into view
   useEffect(() => {
     if (activeCategory && tabsRef.current) {
       const activeTab = tabsRef.current.querySelector(`[data-catid="${activeCategory}"]`) as HTMLElement;
@@ -95,40 +97,42 @@ const MenuView = () => {
     <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Hero Section */}
       <div className="relative">
-        {restaurant.cover_url ? (
-          <div className="h-48 sm:h-56 relative overflow-hidden">
+        {showBanner && restaurant.cover_url ? (
+          <div className="h-40 sm:h-48 relative overflow-hidden">
             <img
               src={restaurant.cover_url}
               alt={restaurant.name}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           </div>
         ) : (
-          <div className="h-32 gradient-gold opacity-20" />
+          <div className="h-20 gradient-gold opacity-10" />
         )}
 
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-3 right-3 z-10">
           <button
             onClick={() => setIsDark(!isDark)}
             className="p-2 rounded-full bg-card/80 backdrop-blur-sm border border-border text-foreground"
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </div>
 
-        <div className="container px-4 -mt-12 relative z-10">
-          <div className="flex items-end gap-4">
-            {restaurant.logo_url && (
+        <div className="container px-4 -mt-8 relative z-10">
+          <div className="flex items-end gap-3">
+            {showLogo && restaurant.logo_url && (
               <img
                 src={restaurant.logo_url}
                 alt="Logo"
-                className="w-20 h-20 rounded-2xl object-cover border-4 border-background shadow-lg"
+                className="w-16 h-16 rounded-xl object-cover border-2 border-background shadow-lg"
+                loading="lazy"
               />
             )}
             <div className="pb-1">
-              <h1 className="font-heading text-2xl sm:text-3xl text-foreground">{restaurant.name}</h1>
-              <p className="text-sm text-muted-foreground mt-1">Digital Menu</p>
+              <h1 className="font-heading text-xl sm:text-2xl text-foreground">{restaurant.name}</h1>
+              <p className="text-xs text-muted-foreground">Digital Menu</p>
             </div>
           </div>
         </div>
@@ -136,10 +140,10 @@ const MenuView = () => {
 
       {/* Sticky Category Tabs */}
       {categories && categories.length > 0 && (
-        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border mt-6">
+        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border mt-4">
           <div
             ref={tabsRef}
-            className="container px-4 flex gap-1 overflow-x-auto py-3 scrollbar-hide"
+            className="container px-4 flex gap-1 overflow-x-auto py-2.5 scrollbar-hide"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {categories.map((cat) => (
@@ -147,7 +151,7 @@ const MenuView = () => {
                 key={cat.id}
                 data-catid={cat.id}
                 onClick={() => scrollToCategory(cat.id)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                   activeCategory === cat.id
                     ? "gradient-gold text-primary-foreground shadow-gold"
                     : "bg-muted text-muted-foreground hover:text-foreground"
@@ -160,72 +164,74 @@ const MenuView = () => {
         </div>
       )}
 
-      {/* Menu Items */}
-      <div className="container px-4 py-6 pb-20">
+      {/* Menu Items — Compact List */}
+      <div className="container px-4 py-4 pb-16">
         {itemsByCategory?.map((cat) => (
           <div
             key={cat.id}
             ref={(el) => { categoryRefs.current[cat.id] = el; }}
-            className="mb-8"
+            className="mb-6"
           >
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               {cat.image_url && (
-                <img src={cat.image_url} alt={cat.name} className="w-8 h-8 rounded-lg object-cover" />
+                <img src={cat.image_url} alt={cat.name} className="w-6 h-6 rounded object-cover" loading="lazy" />
               )}
-              <h2 className="font-heading text-xl text-foreground">{cat.name}</h2>
-              <span className="text-sm text-muted-foreground">({cat.items.length})</span>
+              <h2 className="font-heading text-base text-foreground">{cat.name}</h2>
+              <span className="text-xs text-muted-foreground">({cat.items.length})</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
               {cat.items.map((item, index) => (
                 <div
                   key={item.id}
-                  className="bg-card border border-border rounded-xl overflow-hidden animate-slide-up hover:shadow-lg transition-shadow"
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  className="bg-card border border-border rounded-lg p-3 flex gap-3 animate-fade-in hover:border-primary/30 transition-colors"
+                  style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <div className="aspect-[16/10] relative overflow-hidden">
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-3 left-3">
-                      <span className={`inline-flex items-center justify-center w-5 h-5 rounded border-2 ${
-                        item.is_veg ? "border-green-500" : "border-red-500"
-                      }`}>
-                        <span className={`w-2 h-2 rounded-full ${
-                          item.is_veg ? "bg-green-500" : "bg-red-500"
-                        }`} />
-                      </span>
+                  {/* Thumbnail */}
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                    loading="lazy"
+                  />
+                  {/* Details */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`inline-flex items-center justify-center w-4 h-4 rounded border ${
+                          item.is_veg ? "border-green-500" : "border-red-500"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            item.is_veg ? "bg-green-500" : "bg-red-500"
+                          }`} />
+                        </span>
+                        <h3 className="font-semibold text-sm text-foreground truncate">{item.name}</h3>
+                      </div>
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
+                      )}
                     </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-foreground">{item.name}</h3>
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
-                    )}
-                    <p className="text-gold font-heading text-lg mt-2">₹{item.price}</p>
+                    <p className="text-gold font-heading text-sm mt-1">₹{item.price}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {cat.items.length === 0 && (
-              <p className="text-center text-muted-foreground py-4 text-sm">No items in this category yet.</p>
+              <p className="text-center text-muted-foreground py-3 text-xs">No items in this category yet.</p>
             )}
           </div>
         ))}
 
         {(!categories || categories.length === 0) && (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground font-heading text-lg">Menu coming soon</p>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground font-heading text-base">Menu coming soon</p>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur-md border-t border-border py-3 text-center">
+      <div className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur-md border-t border-border py-2 text-center">
         <p className="text-xs text-muted-foreground">
           Powered by <span className="text-gold font-semibold">Serveza Menu</span>
         </p>

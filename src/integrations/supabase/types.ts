@@ -174,6 +174,8 @@ export type Database = {
           plan_end_date: string | null
           plan_status: string
           plan_type: string
+          show_banner: boolean
+          show_logo: boolean
           slug: string
           status: string
           trial_end_date: string | null
@@ -191,6 +193,8 @@ export type Database = {
           plan_end_date?: string | null
           plan_status?: string
           plan_type?: string
+          show_banner?: boolean
+          show_logo?: boolean
           slug: string
           status?: string
           trial_end_date?: string | null
@@ -208,6 +212,8 @@ export type Database = {
           plan_end_date?: string | null
           plan_status?: string
           plan_type?: string
+          show_banner?: boolean
+          show_logo?: boolean
           slug?: string
           status?: string
           trial_end_date?: string | null
