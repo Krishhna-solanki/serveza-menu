@@ -34,7 +34,7 @@ export const useAllRestaurants = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as (typeof data[number] & { status: string; plan: string })[];
+      return data;
     },
   });
 };
@@ -60,6 +60,48 @@ export const useUpdateRestaurantPlan = () => {
       const { error } = await supabase
         .from("restaurants")
         .update({ plan })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_restaurants"] }),
+  });
+};
+
+export const useUpdateRestaurantPlanDetails = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      plan_type,
+      plan_status,
+      plan_end_date,
+    }: {
+      id: string;
+      plan_type?: string;
+      plan_status?: string;
+      plan_end_date?: string | null;
+    }) => {
+      const updates: Record<string, any> = {};
+      if (plan_type !== undefined) updates.plan_type = plan_type;
+      if (plan_status !== undefined) updates.plan_status = plan_status;
+      if (plan_end_date !== undefined) updates.plan_end_date = plan_end_date;
+      const { error } = await supabase
+        .from("restaurants")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin_restaurants"] }),
+  });
+};
+
+export const useDeleteRestaurant = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("restaurants")
+        .delete()
         .eq("id", id);
       if (error) throw error;
     },
