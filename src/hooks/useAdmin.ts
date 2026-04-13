@@ -81,13 +81,13 @@ export const useUpdateRestaurantPlanDetails = () => {
       plan_status?: string;
       plan_end_date?: string | null;
     }) => {
-      const updates: Record<string, any> = {};
-      if (plan_type !== undefined) updates.plan_type = plan_type;
-      if (plan_status !== undefined) updates.plan_status = plan_status;
-      if (plan_end_date !== undefined) updates.plan_end_date = plan_end_date;
       const { error } = await supabase
         .from("restaurants")
-        .update(updates)
+        .update({
+          plan_type: plan_type ?? undefined,
+          plan_status: plan_status ?? undefined,
+          plan_end_date: plan_end_date ?? undefined,
+        })
         .eq("id", id);
       if (error) throw error;
     },
