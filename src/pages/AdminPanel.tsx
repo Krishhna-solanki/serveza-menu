@@ -79,7 +79,7 @@ const getEffectiveStatus = (r: any): string => {
     return "trial";
   }
   if (r.plan_status === "expired") return "expired";
-  if (r.plan_status === "pending") return "pending";
+  if (r.plan_status === "pending") return "trial"; // treat legacy pending as trial
   if (r.plan_type === "lifetime") return "active";
   if (r.plan_end_date && new Date(r.plan_end_date) < new Date()) return "expired";
   if (r.plan_status === "active") return "active";

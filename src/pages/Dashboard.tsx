@@ -129,7 +129,7 @@ const Dashboard = () => {
 
   const planExpired = isPlanExpired();
 
-  if (restaurant.status !== "active" && restaurant.status !== "pending") {
+  if (restaurant.status === "blocked") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center animate-fade-in">
@@ -139,25 +139,6 @@ const Dashboard = () => {
           <h1 className="font-heading text-2xl text-foreground mb-2">Account Blocked</h1>
           <p className="text-muted-foreground max-w-md">
             Your account has been blocked. Please contact support for assistance.
-          </p>
-          <Button variant="outline" className="mt-6" onClick={async () => { await signOut(); navigate("/login"); }}>
-            <LogOut className="w-4 h-4 mr-2" /> Sign Out
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (restaurant.status === "pending") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="text-center animate-fade-in">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-            <Clock className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h1 className="font-heading text-2xl text-foreground mb-2">Account Pending Approval</h1>
-          <p className="text-muted-foreground max-w-md">
-            Your account is under review. You'll be able to access your dashboard once approved by the admin.
           </p>
           <Button variant="outline" className="mt-6" onClick={async () => { await signOut(); navigate("/login"); }}>
             <LogOut className="w-4 h-4 mr-2" /> Sign Out
