@@ -5,7 +5,6 @@ import {
   useIsAdmin,
   useAllRestaurants,
   useUpdateRestaurantStatus,
-  useUpdateRestaurantPlan,
   useUpdateRestaurantPlanDetails,
   useDeleteRestaurant,
 } from "@/hooks/useAdmin";
@@ -30,6 +29,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   LogOut,
@@ -48,14 +57,19 @@ import {
   CalendarPlus,
   Ban,
   RefreshCw,
+  MoreVertical,
+  Settings2,
+  Shield,
+  ShieldOff,
 } from "lucide-react";
 
-const getDaysLeft = (planEndDate: string | null, planType: string): number | null => {
+const getDaysLeft = (planEndDate: string | null, trialEndDate: string | null, planType: string, planStatus: string): number | null => {
   if (planType === "lifetime") return null;
+  if (planStatus === "trial" && trialEndDate) {
+    return Math.ceil((new Date(trialEndDate).getTime() - Date.now()) / 86400000);
+  }
   if (!planEndDate) return null;
-  const now = new Date();
-  const end = new Date(planEndDate);
-  return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.ceil((new Date(planEndDate).getTime() - Date.now()) / 86400000);
 };
 
 const getEffectiveStatus = (r: any): string => {
@@ -80,6 +94,17 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   trial: { label: "Trial", className: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
 };
 
+const planBadge = (type: string) => {
+  const map: Record<string, { label: string; className: string }> = {
+    trial: { label: "Trial", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+    monthly: { label: "Monthly", className: "bg-primary/10 text-primary border-primary/20" },
+    yearly: { label: "Yearly", className: "bg-primary/15 text-primary border-primary/30" },
+    five_year: { label: "5 Year", className: "bg-primary/20 text-primary border-primary/40" },
+    lifetime: { label: "Lifetime", className: "bg-primary/25 text-primary border-primary/50 font-semibold" },
+  };
+  return map[type] || { label: type, className: "" };
+};
+
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { user, signOut, loading: authLoading } = useAuth();
@@ -87,7 +112,6 @@ const AdminPanel = () => {
   const { data: restaurants, isLoading } = useAllRestaurants();
   const { data: paymentRequests } = useAllPaymentRequests();
   const updateStatus = useUpdateRestaurantStatus();
-  const updatePlan = useUpdateRestaurantPlan();
   const updatePlanDetails = useUpdateRestaurantPlanDetails();
   const deleteRestaurant = useDeleteRestaurant();
   const approvePayment = useApprovePayment();
@@ -106,15 +130,13 @@ const AdminPanel = () => {
     let list = restaurants.map((r) => ({
       ...r,
       effectiveStatus: getEffectiveStatus(r),
-      daysLeft: getDaysLeft(r.plan_end_date, r.plan_type),
+      daysLeft: getDaysLeft(r.plan_end_date, r.trial_end_date, r.plan_type, r.plan_status),
     }));
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          (r.mobile && r.mobile.includes(q))
+        (r) => r.name.toLowerCase().includes(q) || (r.mobile && r.mobile.includes(q))
       );
     }
 
@@ -146,9 +168,7 @@ const AdminPanel = () => {
         <div className="text-center">
           <h1 className="font-heading text-2xl text-foreground mb-2">Access Denied</h1>
           <p className="text-muted-foreground">You don't have permission to access this page.</p>
-          <Button className="mt-4" onClick={() => navigate("/dashboard")}>
-            Go to Dashboard
-          </Button>
+          <Button className="mt-4" onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
         </div>
       </div>
     );
@@ -160,40 +180,21 @@ const AdminPanel = () => {
   const trialCount = restaurants?.filter((r) => getEffectiveStatus(r) === "trial").length || 0;
   const expiredCount = restaurants?.filter((r) => getEffectiveStatus(r) === "expired").length || 0;
   const expiringCount = restaurants?.filter((r) => {
-    const d = getDaysLeft(r.plan_end_date, r.plan_type);
+    const d = getDaysLeft(r.plan_end_date, r.trial_end_date, r.plan_type, r.plan_status);
     return d !== null && d <= 5 && d > 0;
   }).length || 0;
   const pendingPayments = paymentRequests?.filter((p: any) => p.status === "pending").length || 0;
-
-  const handleStatusChange = async (id: string, status: string) => {
-    try {
-      await updateStatus.mutateAsync({ id, status });
-      toast.success(`Status updated to ${status}`);
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
 
   const handleChangePlan = async (id: string, planType: string) => {
     try {
       const now = new Date();
       let planEndDate: string | null = null;
       switch (planType) {
-        case "monthly":
-          planEndDate = new Date(now.getTime() + 30 * 86400000).toISOString();
-          break;
-        case "yearly":
-          planEndDate = new Date(now.getTime() + 365 * 86400000).toISOString();
-          break;
-        case "five_year":
-          planEndDate = new Date(now.getTime() + 1825 * 86400000).toISOString();
-          break;
-        case "lifetime":
-          planEndDate = null;
-          break;
-        case "trial":
-          planEndDate = null;
-          break;
+        case "monthly": planEndDate = new Date(now.getTime() + 30 * 86400000).toISOString(); break;
+        case "yearly": planEndDate = new Date(now.getTime() + 365 * 86400000).toISOString(); break;
+        case "five_year": planEndDate = new Date(now.getTime() + 1825 * 86400000).toISOString(); break;
+        case "lifetime": planEndDate = null; break;
+        case "trial": planEndDate = null; break;
       }
       await updatePlanDetails.mutateAsync({
         id,
@@ -209,15 +210,9 @@ const AdminPanel = () => {
 
   const handleForceExpire = async (id: string) => {
     try {
-      await updatePlanDetails.mutateAsync({
-        id,
-        plan_status: "expired",
-        plan_end_date: new Date().toISOString(),
-      });
+      await updatePlanDetails.mutateAsync({ id, plan_status: "expired", plan_end_date: new Date().toISOString() });
       toast.success("Plan force expired");
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const handleReactivate = async (id: string) => {
@@ -225,9 +220,21 @@ const AdminPanel = () => {
       await updatePlanDetails.mutateAsync({ id, plan_status: "active" });
       await updateStatus.mutateAsync({ id, status: "active" });
       toast.success("Restaurant reactivated");
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    } catch (err: any) { toast.error(err.message); }
+  };
+
+  const handleBlock = async (id: string) => {
+    try {
+      await updateStatus.mutateAsync({ id, status: "blocked" });
+      toast.success("Restaurant blocked");
+    } catch (err: any) { toast.error(err.message); }
+  };
+
+  const handleUnblock = async (id: string) => {
+    try {
+      await updateStatus.mutateAsync({ id, status: "active" });
+      toast.success("Restaurant unblocked");
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const handleExtendExpiry = async () => {
@@ -243,9 +250,7 @@ const AdminPanel = () => {
       });
       toast.success(`Extended by ${extendDays} days`);
       setExtendDialog(null);
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const handleDelete = async (id: string) => {
@@ -253,9 +258,7 @@ const AdminPanel = () => {
       await deleteRestaurant.mutateAsync(id);
       toast.success("Restaurant deleted");
       setDeleteConfirm(null);
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const handleApprove = async (payment: any) => {
@@ -266,18 +269,14 @@ const AdminPanel = () => {
         planType: payment.plan_type,
       });
       toast.success("Payment approved and plan activated!");
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const handleReject = async (paymentId: string) => {
     try {
       await rejectPayment.mutateAsync({ paymentId, notes: "Payment rejected by admin" });
       toast.success("Payment rejected");
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   const planLabel = (type: string) => {
@@ -300,85 +299,92 @@ const AdminPanel = () => {
     }
   };
 
+  const stats = [
+    { label: "Total", value: totalRestaurants, icon: Users, color: "text-foreground" },
+    { label: "Active", value: activeCount, icon: CheckCircle, color: "text-green-500" },
+    { label: "Trial", value: trialCount, icon: Clock, color: "text-blue-500" },
+    { label: "Pending", value: pendingCount, icon: Clock, color: "text-yellow-500" },
+    { label: "Expired", value: expiredCount, icon: X, color: "text-red-500" },
+    { label: "Expiring", value: expiringCount, icon: AlertTriangle, color: "text-orange-500" },
+    { label: "Payments", value: pendingPayments, icon: CreditCard, color: "text-primary" },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="container flex items-center justify-between h-16 px-4">
-          <h1 className="font-heading text-xl text-gradient-gold">Super Admin Panel</h1>
+      {/* Header */}
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-20">
+        <div className="container flex items-center justify-between h-14 px-4">
+          <h1 className="font-heading text-lg text-gradient-gold">Super Admin</h1>
           <Button
             variant="ghost"
-            size="sm"
-            onClick={async () => {
-              await signOut();
-              navigate("/login");
-            }}
+            size="icon"
+            className="h-8 w-8"
+            onClick={async () => { await signOut(); navigate("/login"); }}
           >
             <LogOut className="w-4 h-4" />
           </Button>
         </div>
       </header>
 
-      <div className="container max-w-7xl py-6 px-4">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-          {[
-            { label: "Total", value: totalRestaurants, icon: Users, color: "text-foreground" },
-            { label: "Active", value: activeCount, icon: CheckCircle, color: "text-green-500" },
-            { label: "Trial", value: trialCount, icon: Clock, color: "text-blue-500" },
-            { label: "Pending", value: pendingCount, icon: Clock, color: "text-yellow-500" },
-            { label: "Expired", value: expiredCount, icon: X, color: "text-red-500" },
-            { label: "Expiring Soon", value: expiringCount, icon: AlertTriangle, color: "text-orange-500" },
-            { label: "Payments", value: pendingPayments, icon: CreditCard, color: "text-primary" },
-          ].map((s) => (
-            <div key={s.label} className="bg-card border border-border rounded-lg p-3">
+      <div className="container max-w-7xl py-5 px-4 space-y-5">
+        {/* Stats Row */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+          {stats.map((s) => (
+            <button
+              key={s.label}
+              onClick={() => {
+                if (s.label === "Expiring") setStatusFilter("expiring");
+                else if (s.label === "Active") setStatusFilter("active");
+                else if (s.label === "Pending") setStatusFilter("pending");
+                else if (s.label === "Trial") setStatusFilter("trial");
+                else if (s.label === "Expired") setStatusFilter("expired");
+                else if (s.label === "Payments") setActiveTab("payments");
+                else setStatusFilter("all");
+              }}
+              className="bg-card border border-border rounded-xl p-3 text-left transition-all hover:border-primary/30 hover:shadow-sm"
+            >
               <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
                 <s.icon className="w-3.5 h-3.5" />
-                <span className="text-[11px]">{s.label}</span>
+                <span className="text-[11px] font-medium">{s.label}</span>
               </div>
               <p className={`text-xl font-heading ${s.color}`}>{s.value}</p>
-            </div>
+            </button>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 bg-muted rounded-lg p-1">
-          {[
-            { id: "restaurants" as const, label: "Restaurants" },
-            {
-              id: "payments" as const,
-              label: `Payments${pendingPayments > 0 ? ` (${pendingPayments})` : ""}`,
-            },
-          ].map((tab) => (
+        <div className="flex gap-1 bg-muted/50 rounded-xl p-1">
+          {(["restaurants", "payments"] as const).map((tab) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                activeTab === tab.id
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab.label}
+              {tab === "restaurants" ? "Restaurants" : `Payments${pendingPayments > 0 ? ` (${pendingPayments})` : ""}`}
             </button>
           ))}
         </div>
 
         {/* Restaurants Tab */}
         {activeTab === "restaurants" && (
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
-            {/* Search & Filters */}
-            <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            {/* Search & Filter Bar */}
+            <div className="p-3 border-b border-border flex flex-col sm:flex-row gap-2.5">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name or mobile..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 h-9"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-full sm:w-[170px] h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -388,251 +394,209 @@ const AdminPanel = () => {
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="expired">Expired</SelectItem>
                   <SelectItem value="blocked">Blocked</SelectItem>
-                  <SelectItem value="expiring">Expiring in 5 days</SelectItem>
+                  <SelectItem value="expiring">⚠ Expiring in 5 days</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {isLoading ? (
-              <div className="p-8 text-center text-muted-foreground">Loading...</div>
+              <div className="p-12 text-center text-muted-foreground">Loading...</div>
             ) : filteredRestaurants.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">No restaurants found.</div>
+              <div className="p-12 text-center text-muted-foreground">No restaurants found.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left p-3 text-muted-foreground font-medium text-xs">Restaurant</th>
-                      <th className="text-left p-3 text-muted-foreground font-medium text-xs">Mobile</th>
-                      <th className="text-left p-3 text-muted-foreground font-medium text-xs">Status</th>
-                      <th className="text-left p-3 text-muted-foreground font-medium text-xs">Plan</th>
-                      <th className="text-left p-3 text-muted-foreground font-medium text-xs">Expiry</th>
-                      <th className="text-left p-3 text-muted-foreground font-medium text-xs">Days Left</th>
-                      <th className="text-left p-3 text-muted-foreground font-medium text-xs">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRestaurants.map((r) => {
-                      const status = statusConfig[r.effectiveStatus] || statusConfig.pending;
-                      const isExpiring = r.daysLeft !== null && r.daysLeft <= 5 && r.daysLeft > 0;
-                      const isExpired = r.effectiveStatus === "expired";
+              <div className="divide-y divide-border">
+                {filteredRestaurants.map((r) => {
+                  const status = statusConfig[r.effectiveStatus] || statusConfig.pending;
+                  const plan = planBadge(r.plan_type);
+                  const isExpiring = r.daysLeft !== null && r.daysLeft <= 5 && r.daysLeft > 0;
+                  const isExpired = r.effectiveStatus === "expired";
+                  const isBlocked = r.effectiveStatus === "blocked";
 
-                      return (
-                        <tr
-                          key={r.id}
-                          className={`border-b border-border last:border-0 hover:bg-muted/50 ${
-                            isExpired ? "bg-red-500/5" : isExpiring ? "bg-orange-500/5" : ""
-                          }`}
+                  return (
+                    <div
+                      key={r.id}
+                      className={`flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/30 ${
+                        isExpired ? "bg-red-500/5" : isExpiring ? "bg-orange-500/5" : ""
+                      }`}
+                    >
+                      {/* Left: Restaurant Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-foreground text-sm truncate">{r.name}</p>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${status.className}`}>
+                            {status.label}
+                          </Badge>
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${plan.className}`}>
+                            {plan.label}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{r.mobile || "No mobile"}</span>
+                          <span>·</span>
+                          {r.plan_type === "lifetime" ? (
+                            <span className="text-primary font-medium">∞ Lifetime</span>
+                          ) : r.daysLeft !== null ? (
+                            <span className={`font-semibold ${
+                              r.daysLeft <= 0 ? "text-red-500" : r.daysLeft <= 5 ? "text-orange-500" : "text-green-500"
+                            }`}>
+                              {r.daysLeft <= 0 ? "Expired" : `${r.daysLeft}d left`}
+                              {isExpiring && <AlertTriangle className="inline w-3 h-3 ml-0.5" />}
+                            </span>
+                          ) : (
+                            <span>No expiry set</span>
+                          )}
+                          {r.plan_end_date && r.plan_type !== "lifetime" && (
+                            <>
+                              <span>·</span>
+                              <span>Exp: {new Date(r.plan_end_date).toLocaleDateString()}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Open Menu"
+                          onClick={() => window.open(`/menu/${r.slug}`, "_blank")}
                         >
-                          <td className="p-3">
-                            <p className="font-medium text-foreground">{r.name}</p>
-                            <p className="text-[11px] text-muted-foreground">{r.slug}</p>
-                          </td>
-                          <td className="p-3 text-muted-foreground text-xs">{r.mobile || "—"}</td>
-                          <td className="p-3">
-                            <Badge variant="outline" className={status.className}>
-                              {status.label}
-                            </Badge>
-                          </td>
-                          <td className="p-3">
-                            <Select
-                              value={r.plan_type}
-                              onValueChange={(v) => handleChangePlan(r.id, v)}
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Copy Link"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/menu/${r.slug}`);
+                            toast.success("Link copied!");
+                          }}
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </Button>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs px-2.5">
+                              <Settings2 className="w-3.5 h-3.5" />
+                              Manage
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {/* Change Plan Sub-menu */}
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <CreditCard className="w-3.5 h-3.5 mr-2" />
+                                Change Plan
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                {["trial", "monthly", "yearly", "five_year", "lifetime"].map((p) => (
+                                  <DropdownMenuItem
+                                    key={p}
+                                    onClick={() => handleChangePlan(r.id, p)}
+                                    className={r.plan_type === p ? "bg-accent" : ""}
+                                  >
+                                    {planLabel(p)}
+                                    {r.plan_type === p && <Check className="w-3 h-3 ml-auto" />}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuItem onClick={() => setExtendDialog({ id: r.id, name: r.name })}>
+                              <CalendarPlus className="w-3.5 h-3.5 mr-2" />
+                              Extend Expiry
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
+                            {isBlocked ? (
+                              <DropdownMenuItem onClick={() => handleUnblock(r.id)}>
+                                <ShieldOff className="w-3.5 h-3.5 mr-2" />
+                                Unblock
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => handleBlock(r.id)}>
+                                <Shield className="w-3.5 h-3.5 mr-2" />
+                                Block
+                              </DropdownMenuItem>
+                            )}
+
+                            {r.effectiveStatus !== "expired" && (
+                              <DropdownMenuItem onClick={() => handleForceExpire(r.id)} className="text-orange-500">
+                                <Ban className="w-3.5 h-3.5 mr-2" />
+                                Force Expire
+                              </DropdownMenuItem>
+                            )}
+
+                            {(isExpired || isBlocked) && (
+                              <DropdownMenuItem onClick={() => handleReactivate(r.id)} className="text-green-500">
+                                <RefreshCw className="w-3.5 h-3.5 mr-2" />
+                                Reactivate
+                              </DropdownMenuItem>
+                            )}
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              onClick={() => setDeleteConfirm(r.id)}
+                              className="text-red-500 focus:text-red-500"
                             >
-                              <SelectTrigger className="w-[100px] h-7 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="trial">Trial</SelectItem>
-                                <SelectItem value="monthly">Monthly</SelectItem>
-                                <SelectItem value="yearly">Yearly</SelectItem>
-                                <SelectItem value="five_year">5 Year</SelectItem>
-                                <SelectItem value="lifetime">Lifetime</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="p-3 text-xs text-muted-foreground">
-                            {r.plan_type === "lifetime" ? (
-                              <span className="text-primary">∞ Lifetime</span>
-                            ) : r.plan_end_date ? (
-                              new Date(r.plan_end_date).toLocaleDateString()
-                            ) : r.trial_end_date ? (
-                              new Date(r.trial_end_date).toLocaleDateString()
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                          <td className="p-3">
-                            {r.plan_type === "lifetime" ? (
-                              <span className="text-xs text-primary">∞</span>
-                            ) : r.daysLeft !== null ? (
-                              <span
-                                className={`text-xs font-semibold ${
-                                  r.daysLeft <= 0
-                                    ? "text-red-500"
-                                    : r.daysLeft <= 5
-                                    ? "text-orange-500"
-                                    : "text-green-500"
-                                }`}
-                              >
-                                {r.daysLeft <= 0 ? "Expired" : `${r.daysLeft}d`}
-                                {isExpiring && (
-                                  <AlertTriangle className="inline w-3 h-3 ml-1" />
-                                )}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                title="Open Menu"
-                                onClick={() => window.open(`/menu/${r.slug}`, "_blank")}
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                title="Copy Link"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    `${window.location.origin}/menu/${r.slug}`
-                                  );
-                                  toast.success("Copied!");
-                                }}
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                title="Extend Expiry"
-                                onClick={() => setExtendDialog({ id: r.id, name: r.name })}
-                              >
-                                <CalendarPlus className="w-3.5 h-3.5" />
-                              </Button>
-                              {r.effectiveStatus !== "expired" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-orange-500"
-                                  title="Force Expire"
-                                  onClick={() => handleForceExpire(r.id)}
-                                >
-                                  <Ban className="w-3.5 h-3.5" />
-                                </Button>
-                              )}
-                              {(r.effectiveStatus === "expired" ||
-                                r.effectiveStatus === "blocked") && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-green-500"
-                                  title="Reactivate"
-                                  onClick={() => handleReactivate(r.id)}
-                                >
-                                  <RefreshCw className="w-3.5 h-3.5" />
-                                </Button>
-                              )}
-                              <Select
-                                value={r.status}
-                                onValueChange={(v) => handleStatusChange(r.id, v)}
-                              >
-                                <SelectTrigger className="w-[80px] h-7 text-[11px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="active">Active</SelectItem>
-                                  <SelectItem value="blocked">Blocked</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-red-500"
-                                title="Delete"
-                                onClick={() => setDeleteConfirm(r.id)}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                              <Trash2 className="w-3.5 h-3.5 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
         )}
 
-        {/* Payment Requests Tab */}
+        {/* Payments Tab */}
         {activeTab === "payments" && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {!paymentRequests?.length && (
-              <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground">
+              <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground">
                 No payment requests yet.
               </div>
             )}
             {paymentRequests?.map((p: any) => (
-              <div key={p.id} className="bg-card border border-border rounded-lg p-4">
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <div className="flex-1">
+              <div key={p.id} className="bg-card border border-border rounded-xl p-4 transition-all hover:border-primary/20">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-foreground">
+                      <p className="font-medium text-foreground text-sm truncate">
                         {p.restaurants?.name || "Unknown"}
                       </p>
                       <Badge variant="outline" className={paymentStatusColor(p.status)}>
                         {p.status}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Plan: {planLabel(p.plan_type)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Amount: ₹{p.amount?.toLocaleString()}
-                    </p>
-                    {p.upi_transaction_id && (
-                      <p className="text-sm text-muted-foreground">
-                        UPI Txn: {p.upi_transaction_id}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(p.created_at).toLocaleString()}
-                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                      <span>Plan: {planLabel(p.plan_type)}</span>
+                      <span>Amount: ₹{p.amount?.toLocaleString()}</span>
+                      {p.upi_transaction_id && <span>UPI: {p.upi_transaction_id}</span>}
+                      <span>{new Date(p.created_at).toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setScreenshotDialog(p.screenshot_url)}
-                    >
-                      <ImageIcon className="w-4 h-4 mr-1" /> Screenshot
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="outline" size="sm" className="h-8" onClick={() => setScreenshotDialog(p.screenshot_url)}>
+                      <ImageIcon className="w-3.5 h-3.5 mr-1" /> View
                     </Button>
                     {p.status === "pending" && (
                       <>
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                          onClick={() => handleApprove(p)}
-                        >
-                          <Check className="w-4 h-4 mr-1" /> Approve
+                        <Button size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprove(p)}>
+                          <Check className="w-3.5 h-3.5 mr-1" /> Approve
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleReject(p.id)}
-                        >
-                          <X className="w-4 h-4 mr-1" /> Reject
+                        <Button size="sm" variant="destructive" className="h-8" onClick={() => handleReject(p.id)}>
+                          <X className="w-3.5 h-3.5 mr-1" /> Reject
                         </Button>
                       </>
                     )}
@@ -656,7 +620,7 @@ const AdminPanel = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -666,12 +630,8 @@ const AdminPanel = () => {
             This will permanently delete this restaurant and all its data. This cannot be undone.
           </p>
           <div className="flex gap-2 justify-end mt-4">
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>
-              Delete
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>Delete</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -686,25 +646,13 @@ const AdminPanel = () => {
             <p className="text-sm text-muted-foreground">Add days to the current expiry date:</p>
             <div className="flex gap-2">
               {["7", "30", "90", "365"].map((d) => (
-                <Button
-                  key={d}
-                  variant={extendDays === d ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setExtendDays(d)}
-                >
+                <Button key={d} variant={extendDays === d ? "default" : "outline"} size="sm" onClick={() => setExtendDays(d)}>
                   {d}d
                 </Button>
               ))}
             </div>
-            <Input
-              type="number"
-              value={extendDays}
-              onChange={(e) => setExtendDays(e.target.value)}
-              placeholder="Custom days"
-            />
-            <Button className="w-full" onClick={handleExtendExpiry}>
-              Extend by {extendDays} days
-            </Button>
+            <Input type="number" value={extendDays} onChange={(e) => setExtendDays(e.target.value)} placeholder="Custom days" />
+            <Button className="w-full" onClick={handleExtendExpiry}>Extend by {extendDays} days</Button>
           </div>
         </DialogContent>
       </Dialog>
