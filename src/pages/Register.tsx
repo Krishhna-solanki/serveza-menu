@@ -53,6 +53,7 @@ const Register = () => {
           plan_type: "trial",
           plan_status: "trial",
           trial_end_date: trialEnd.toISOString(),
+          status: "active",
         });
         if (restError) {
           console.error("Restaurant creation error:", restError);
