@@ -62,6 +62,7 @@ import {
   Shield,
   ShieldOff,
 } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 
 const getDaysLeft = (planEndDate: string | null, trialEndDate: string | null, planType: string, planStatus: string): number | null => {
   if (planType === "lifetime") return null;
@@ -315,14 +316,17 @@ const AdminPanel = () => {
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-20">
         <div className="container flex items-center justify-between h-14 px-4">
           <h1 className="font-heading text-lg text-gradient-gold">Super Admin</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={async () => { await signOut(); navigate("/login"); }}
-          >
-            <LogOut className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={async () => { await signOut(); navigate("/login"); }}
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
