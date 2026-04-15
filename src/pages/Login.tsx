@@ -5,13 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import OTPVerification from "@/components/OTPVerification";
+import { useCheckDevice } from "@/hooks/useDeviceFingerprint";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showOTP, setShowOTP] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<any>(null);
+
+  const { isNewDevice, trustDevice, updateLastUsed } = useCheckDevice(loggedInUser?.id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,11 +25,33 @@ const Login = () => {
     const { error } = await signIn(email, password);
     if (error) {
       toast.error(error.message);
-    } else {
-      navigate("/dashboard");
+      setLoading(false);
+      return;
     }
     setLoading(false);
+    // After successful sign-in, check device
+    // The auth state change will provide user data
+    // For now navigate directly - device check happens in dashboard
+    navigate("/dashboard");
   };
+
+  if (showOTP && loggedInUser) {
+    return (
+      <OTPVerification
+        email={loggedInUser.email}
+        userId={loggedInUser.id}
+        purpose="device_verification"
+        onVerified={async () => {
+          await trustDevice();
+          navigate("/dashboard");
+        }}
+        onCancel={() => {
+          setShowOTP(false);
+          setLoggedInUser(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -64,7 +92,7 @@ const Login = () => {
           </form>
           <p className="text-center text-sm text-muted-foreground mt-4">
             Don't have an account?{" "}
-            <Link to="/register" className="text-gold hover:underline">Create one</Link>
+            <Link to="/register" className="text-primary hover:underline">Create one</Link>
           </p>
         </div>
       </div>
