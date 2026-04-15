@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, useCreateRestaurant, useCategories, useMenuItems, useUpdateRestaurant, useCreateCategory, useUpdateCategory, useDeleteCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem } from "@/hooks/useRestaurant";
+import { useCheckDevice } from "@/hooks/useDeviceFingerprint";
+import OTPVerification from "@/components/OTPVerification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,6 +81,8 @@ const Dashboard = () => {
   const createMenuItem = useCreateMenuItem();
   const updateMenuItem = useUpdateMenuItem();
   const deleteMenuItem = useDeleteMenuItem();
+  const { isNewDevice, loading: deviceLoading, trustDevice, updateLastUsed } = useCheckDevice(user?.id);
+  const [deviceVerified, setDeviceVerified] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"profile" | "categories" | "items">("profile");
   const [categoryDialog, setCategoryDialog] = useState(false);
