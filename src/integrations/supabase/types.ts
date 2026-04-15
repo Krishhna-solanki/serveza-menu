@@ -112,6 +112,69 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      otp_verifications: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          is_used: boolean
+          otp_code: string
+          purpose: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          is_used?: boolean
+          otp_code: string
+          purpose?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          otp_code?: string
+          purpose?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           admin_notes: string | null
@@ -218,6 +281,36 @@ export type Database = {
           status?: string
           trial_end_date?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_devices: {
+        Row: {
+          created_at: string
+          device_fingerprint: string
+          device_name: string | null
+          id: string
+          is_trusted: boolean
+          last_used_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint: string
+          device_name?: string | null
+          id?: string
+          is_trusted?: boolean
+          last_used_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string
+          device_name?: string | null
+          id?: string
+          is_trusted?: boolean
+          last_used_at?: string
           user_id?: string
         }
         Relationships: []
