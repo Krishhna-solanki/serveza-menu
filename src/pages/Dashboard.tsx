@@ -100,7 +100,7 @@ const Dashboard = () => {
   });
   const [itemImage, setItemImage] = useState<File | null>(null);
 
-  if (authLoading || isLoading) {
+  if (authLoading || isLoading || deviceLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-gold animate-pulse font-heading text-2xl">Loading...</div>
@@ -111,6 +111,25 @@ const Dashboard = () => {
   if (!user) {
     navigate("/login");
     return null;
+  }
+
+  // New device detected - require OTP verification
+  if (isNewDevice && !deviceVerified) {
+    return (
+      <OTPVerification
+        email={user.email || ""}
+        userId={user.id}
+        purpose="device_verification"
+        onVerified={async () => {
+          await trustDevice();
+          setDeviceVerified(true);
+        }}
+        onCancel={async () => {
+          await signOut();
+          navigate("/login");
+        }}
+      />
+    );
   }
 
   if (!restaurant) {
