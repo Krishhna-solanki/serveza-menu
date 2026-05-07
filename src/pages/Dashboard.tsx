@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, useCreateRestaurant, useCategories, useMenuItems, useUpdateRestaurant, useCreateCategory, useUpdateCategory, useDeleteCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem } from "@/hooks/useRestaurant";
 import { useCheckDevice } from "@/hooks/useDeviceFingerprint";
 import OTPVerification from "@/components/OTPVerification";
+import { OTP_VERIFICATION_ENABLED } from "@/lib/featureFlags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
