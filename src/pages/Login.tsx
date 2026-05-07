@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import OTPVerification from "@/components/OTPVerification";
 import { useCheckDevice } from "@/hooks/useDeviceFingerprint";
+import { OTP_VERIFICATION_ENABLED } from "@/lib/featureFlags";
 
 const Login = () => {
   const navigate = useNavigate();
