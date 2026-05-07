@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRestaurant, useCreateRestaurant, useCategories, useMenuItems, useUpdateRestaurant, useCreateCategory, useUpdateCategory, useDeleteCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem } from "@/hooks/useRestaurant";
 import { useCheckDevice } from "@/hooks/useDeviceFingerprint";
 import OTPVerification from "@/components/OTPVerification";
+import { OTP_VERIFICATION_ENABLED } from "@/lib/featureFlags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,7 +82,7 @@ const Dashboard = () => {
   const createMenuItem = useCreateMenuItem();
   const updateMenuItem = useUpdateMenuItem();
   const deleteMenuItem = useDeleteMenuItem();
-  const { isNewDevice, loading: deviceLoading, trustDevice, updateLastUsed } = useCheckDevice(user?.id);
+  const { isNewDevice, loading: deviceLoading, trustDevice, updateLastUsed } = useCheckDevice(OTP_VERIFICATION_ENABLED ? user?.id : undefined);
   const [deviceVerified, setDeviceVerified] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"profile" | "categories" | "items">("profile");
@@ -100,7 +101,7 @@ const Dashboard = () => {
   });
   const [itemImage, setItemImage] = useState<File | null>(null);
 
-  if (authLoading || isLoading || deviceLoading) {
+  if (authLoading || isLoading || (OTP_VERIFICATION_ENABLED && deviceLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-gold animate-pulse font-heading text-2xl">Loading...</div>
@@ -113,8 +114,8 @@ const Dashboard = () => {
     return null;
   }
 
-  // New device detected - require OTP verification
-  if (isNewDevice && !deviceVerified) {
+  // New device detected - require OTP verification (disabled until custom email domain is configured)
+  if (OTP_VERIFICATION_ENABLED && isNewDevice && !deviceVerified) {
     return (
       <OTPVerification
         email={user.email || ""}
