@@ -82,7 +82,7 @@ const Dashboard = () => {
   const createMenuItem = useCreateMenuItem();
   const updateMenuItem = useUpdateMenuItem();
   const deleteMenuItem = useDeleteMenuItem();
-  const { isNewDevice, loading: deviceLoading, trustDevice, updateLastUsed } = useCheckDevice(user?.id);
+  const { isNewDevice, loading: deviceLoading, trustDevice, updateLastUsed } = useCheckDevice(OTP_VERIFICATION_ENABLED ? user?.id : undefined);
   const [deviceVerified, setDeviceVerified] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"profile" | "categories" | "items">("profile");
