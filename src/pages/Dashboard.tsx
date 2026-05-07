@@ -101,7 +101,7 @@ const Dashboard = () => {
   });
   const [itemImage, setItemImage] = useState<File | null>(null);
 
-  if (authLoading || isLoading || deviceLoading) {
+  if (authLoading || isLoading || (OTP_VERIFICATION_ENABLED && deviceLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-gold animate-pulse font-heading text-2xl">Loading...</div>
@@ -114,8 +114,8 @@ const Dashboard = () => {
     return null;
   }
 
-  // New device detected - require OTP verification
-  if (isNewDevice && !deviceVerified) {
+  // New device detected - require OTP verification (disabled until custom email domain is configured)
+  if (OTP_VERIFICATION_ENABLED && isNewDevice && !deviceVerified) {
     return (
       <OTPVerification
         email={user.email || ""}
