@@ -47,6 +47,13 @@ export type Database = {
             foreignKeyName: "categories_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "public_restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -101,6 +108,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "public_restaurants"
             referencedColumns: ["id"]
           },
           {
@@ -216,6 +230,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_requests_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "public_restaurants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_requests_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -338,7 +359,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_restaurants: {
+        Row: {
+          cover_url: string | null
+          id: string | null
+          logo_url: string | null
+          name: string | null
+          show_banner: boolean | null
+          show_logo: boolean | null
+          slug: string | null
+        }
+        Insert: {
+          cover_url?: string | null
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          show_banner?: boolean | null
+          show_logo?: boolean | null
+          slug?: string | null
+        }
+        Update: {
+          cover_url?: string | null
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          show_banner?: boolean | null
+          show_logo?: boolean | null
+          slug?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_slug: { Args: { name: string }; Returns: string }
