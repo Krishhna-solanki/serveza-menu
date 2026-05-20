@@ -25,8 +25,8 @@ export const useRestaurantBySlug = (slug: string) => {
   return useQuery({
     queryKey: ["restaurant", "slug", slug],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("restaurants")
+      const { data, error } = await (supabase as any)
+        .from("public_restaurants")
         .select("*")
         .eq("slug", slug)
         .maybeSingle();
