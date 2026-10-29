@@ -3,7 +3,7 @@
 import { writeFileSync } from "fs"
 import { resolve } from "path"
 
-const BASE_URL = "https://serveza-menu.lovable.app"
+const BASE_URL = process.env.SITE_URL || "https://serveza-menu.lovable.app"
 
 interface SitemapEntry {
   path: string
