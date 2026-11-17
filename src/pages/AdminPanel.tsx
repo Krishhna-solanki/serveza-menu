@@ -63,6 +63,7 @@ import {
   ShieldOff,
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
+import { getMenuUrl } from "@/lib/menuUrl";
 
 const getDaysLeft = (planEndDate: string | null, trialEndDate: string | null, planType: string, planStatus: string): number | null => {
   if (planType === "lifetime") return null;
@@ -465,7 +466,7 @@ const AdminPanel = () => {
                           size="icon"
                           className="h-8 w-8"
                           title="Open Menu"
-                          onClick={() => window.open(`/menu/${r.slug}`, "_blank")}
+                          onClick={() => window.open(getMenuUrl(r.slug), "_blank")}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Button>
@@ -475,7 +476,7 @@ const AdminPanel = () => {
                           className="h-8 w-8"
                           title="Copy Link"
                           onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/menu/${r.slug}`);
+                            navigator.clipboard.writeText(getMenuUrl(r.slug));
                             toast.success("Link copied!");
                           }}
                         >

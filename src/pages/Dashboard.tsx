@@ -17,6 +17,7 @@ import { uploadFile } from "@/lib/storage";
 import { Plus, Pencil, Trash2, LogOut, Eye, Image, Download, Clock, Crown, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { QRCodeCanvas } from "qrcode.react";
+import { getMenuUrl } from "@/lib/menuUrl";
 
 const SetupRestaurant = ({ userId }: { userId: string }) => {
   const [name, setName] = useState("");
@@ -422,12 +423,12 @@ const Dashboard = () => {
                 <div>
                   <Label>Menu Link</Label>
                   <div className="flex items-center gap-2 mt-1">
-                    <Input value={`${window.location.origin}/menu/${restaurant.slug}`} readOnly className="text-sm" />
+                    <Input value={getMenuUrl(restaurant.slug)} readOnly className="text-sm" />
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/menu/${restaurant.slug}`);
+                        navigator.clipboard.writeText(getMenuUrl(restaurant.slug));
                         toast.success("Link copied!");
                       }}
                     >
@@ -439,7 +440,7 @@ const Dashboard = () => {
                   <div className="mt-2 flex flex-col items-center gap-3 p-4 bg-white rounded-lg border border-border w-fit">
                     <QRCodeCanvas
                       id="menu-qr-code"
-                      value={`${window.location.origin}/menu/${restaurant.slug}`}
+                      value={getMenuUrl(restaurant.slug)}
                       size={200}
                       level="H"
                       bgColor="#ffffff"
